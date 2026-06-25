@@ -1135,11 +1135,14 @@ function renderDashboard() {
     else s = '审查中';
     statusMap[s] = (statusMap[s] || 0) + 1;
   });
+  const statusLabels = Object.keys(statusMap);
+  const statusColorMap = { '已授权':'#34a853', '已终止':'#d0d0d0', '已驳回':'#fbbc04', '已撤回':'#7b1fa2', '避免重复授权放弃':'#999999', '审查中':'#1a73e8' };
+  const statusColors = statusLabels.map(l => statusColorMap[l] || '#999999');
   new Chart(document.getElementById('chartStatus'), {
     type: 'pie',
     data: {
-      labels: Object.keys(statusMap),
-      datasets: [{ data: Object.values(statusMap), backgroundColor: ['#34a853','#ea4335','#fbbc04','#7b1fa2','#1a73e8'], borderWidth:0 }]
+      labels: statusLabels,
+      datasets: [{ data: Object.values(statusMap), backgroundColor: statusColors, borderWidth:0 }]
     },
     options: { responsive:true, plugins:{legend:{position:'bottom'}} }
   });

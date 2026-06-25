@@ -1243,13 +1243,11 @@ function renderTable() {
 
   tbody.innerHTML = pageData.map(p => {
     const appNo = p.申请号.replace(/^CN/, '');
-    const hasDoc = (typeof PATENT_DOCS !== 'undefined' && PATENT_DOCS[appNo] && PATENT_DOCS[appNo].trim().length > 0);
-    const hasPDF = (typeof PATENT_PDFS !== 'undefined' && PATENT_PDFS[appNo]);
     const hasCert = (typeof PATENT_CERTIFICATES !== 'undefined' && PATENT_CERTIFICATES[appNo]);
     return `
     <tr class="${selectedIds.has(p.id) ? 'selected' : ''}" data-id="${p.id}">
       <td class="checkbox-cell"><input type="checkbox" ${selectedIds.has(p.id) ? 'checked' : ''} onchange="toggleSelect(${p.id})" /></td>
-      <td style="font-size:12px;color:var(--gray-600);white-space:nowrap;">${p.申请号}${hasDoc ? ' <span style="color:#1a73e8;" title="有专利原文">📄</span>' : ''}${hasCert ? ' <span style="color:#34a853;" title="有证书">🏆</span>' : ''}</td>
+      <td style="font-size:12px;color:var(--gray-600);white-space:nowrap;">${p.申请号}${hasCert ? ' <span style="color:#34a853;" title="有证书">🏆</span>' : ''}</td>
       <td><span class="patent-name" onclick="showDetail(${p.id})">${p.发明名称}</span></td>
       <td>${typeBadge(p.文献类型)}</td>
       <td style="white-space:nowrap;">${p.申请日}</td>
@@ -1642,35 +1640,17 @@ function showDetail(id) {
   const p = patents.find(x => x.id === id);
   document.getElementById('modalTitle').textContent = p.发明名称;
   
-  const related = patents.findRelated = patents.filter(x => x.发明名称 === p.发明名称 && x.id !== p.id);
+  const related = patents.filter(x => x.发明名称 === p.发明名称 && x.id !== p.id);
   
   // Get document content via application number (strip CN prefix)
   const appNo = p.申请号.replace(/^CN/, '');
   const docContent = (typeof PATENT_DOCS !== 'undefined' && PATENT_DOCS[appNo]) ? PATENT_DOCS[appNo] : '';
-  const hasDoc = docContent && docContent.trim().length > 0;
-  const isAuthorized = p.法律状态.includes('授予');
   const hasPDF = (typeof PATENT_PDFS !== 'undefined' && PATENT_PDFS[appNo]);
   const hasCert = (typeof PATENT_CERTIFICATES !== 'undefined' && PATENT_CERTIFICATES[appNo]);
   
-  // Check if related patents (same invention name) have documents
-  let relatedDocAppNo = '';
-  if (!hasDoc && related.length > 0) {
-    for (const r of related) {
-      const rAppNo = r.申请号.replace(/^CN/, '');
-      if (typeof PATENT_DOCS !== 'undefined' && PATENT_DOCS[rAppNo] && PATENT_DOCS[rAppNo].trim().length > 0) {
-        relatedDocAppNo = rAppNo;
-        break;
-      }
-    }
-  }
-  
-  let html = `<div class="detail-tabs">
-    <div class="detail-tab active" onclick="switchDetailTab('info',this)">📋 基本信息</div>
-    <div class="detail-tab${hasDoc ? '' : ' style=\"opacity:.5;cursor:default;\"'}" ${hasDoc ? 'onclick="switchDetailTab(\'doc\',this)"' : ''}>📄 专利原文${hasDoc ? '' : ' <span style=\"font-size:11px;color:var(--gray-400)\">（无文档）</span>'}</div>
-  </div>`;
+  let html = `<div style="padding:24px;">`;
 
-  // === Tab 1: 基本信息 ===
-  html += `<div class="detail-tab-content active" id="detailTab-info">`;
+  // === 基本信息 ===
   html += `<div class="detail-grid">
     <div class="detail-item"><div class="detail-label">申请号</div><div class="detail-value">${p.申请号}</div></div>
     <div class="detail-item"><div class="detail-label">公开（公告）号</div><div class="detail-value">${p.公开号}</div></div>
@@ -1682,200 +1662,49 @@ function showDetail(id) {
     <div class="detail-item"><div class="detail-label">技术领域</div><div class="detail-value">${p.分类}</div></div>
   </div>`;
 
+  // 摘要
+  const abstractText = extractAbstract(docContent);
+  html += `<div class="detail-section"><h3>摘要</h3><div style="font-size:14px;color:var(--gray-700);line-height:1.7;">${abstractText || '-'}</div></div>`;
+
   if (related.length > 0) {
     html += `<div class="detail-section"><h3>同族专利</h3><table style="width:100%;border-collapse:collapse;">
       <tr style="background:var(--gray-50);"><th style="padding:8px 12px;text-align:left;font-size:12px;">申请号</th><th style="padding:8px 12px;text-align:left;font-size:12px;">类型</th><th style="padding:8px 12px;text-align:left;font-size:12px;">状态</th></tr>`;
     related.forEach(r => {
-      const rAppNo = r.申请号.replace(/^CN/, '');
-      const rHasDoc = (typeof PATENT_DOCS !== 'undefined' && PATENT_DOCS[rAppNo] && PATENT_DOCS[rAppNo].trim().length > 0);
-      html += `<tr><td style="padding:8px 12px;font-size:13px;">${r.申请号}${rHasDoc ? ' 📄' : ''}</td><td style="padding:8px 12px;">${typeBadge(r.文献类型)}</td><td style="padding:8px 12px;">${statusBadge(r.法律状态)}</td></tr>`;
+      html += `<tr><td style="padding:8px 12px;font-size:13px;">${r.申请号}</td><td style="padding:8px 12px;">${typeBadge(r.文献类型)}</td><td style="padding:8px 12px;">${statusBadge(r.法律状态)}</td></tr>`;
     });
     html += '</table></div>';
   }
 
-  const ipcMap = {
-    '楼板体系': 'E04B 5/00, E04C 2/00',
-    '梁结构': 'E04C 3/00',
-    '柱/节点': 'E04C 3/34, E04B 1/58',
-    '密肋体系': 'E04B 5/18, E04C 2/00',
-    '制造/模具': 'B28B 7/00, B28B 23/00',
-    '楼梯': 'E04F 11/00',
-    '桩基': 'E02D 5/00',
-    '钢结构': 'E04C 3/00, E04B 1/24',
-    '其他': '-'
-  };
-  html += `<div class="detail-section"><h3>参考IPC分类</h3><div style="font-size:14px;color:var(--gray-700);">${ipcMap[p.分类] || '-'}</div></div>`;
-  
-  // Document & Certificate section for authorized patents
-  if (isAuthorized || hasPDF || hasCert) {
+  // 文档与证书
+  if (hasPDF || hasCert) {
     html += `<div class="detail-section"><h3>文档与证书</h3><div style="display:flex;gap:10px;flex-wrap:wrap;">`;
     if (hasPDF) html += `<button class="btn btn-sm" style="background:var(--primary);color:#fff;" onclick="downloadPatentPDF()">📄 下载PDF</button>`;
-    if (hasDoc) html += `<button class="btn btn-outline btn-sm" onclick="switchDetailTab('doc',document.querySelectorAll('.detail-tab')[1])">📄 查看文本原文</button>`;
     if (hasCert) html += `<button class="btn btn-sm" style="background:var(--success);color:#fff;" onclick="downloadCertificate('${appNo}')">🏆 下载证书</button>`;
-    if (!hasPDF && !hasDoc && !hasCert) html += `<span style="font-size:13px;color:var(--gray-500);">暂无文档</span>`;
     html += `</div></div>`;
-  }
-  html += `</div>`;
-
-  // === Tab 2: 专利原文 ===
-  html += `<div class="detail-tab-content" id="detailTab-doc">`;
-  if (hasDoc) {
-    // Parse document metadata from content
-    const extractField = (text, regex) => { const m = text.match(regex); return m ? m[1].trim() : '-'; };
-    const docType = extractField(docContent, /\(12\)\s*(发明专利|实用新型专利|外观设计专利|发明|实用新型|外观设计)/);
-    const docPubNo = extractField(docContent, /\(10\)\s*(?:授权公告号|公告号)\s*(CN\s*\S+)/);
-    const docPubDate = extractField(docContent, /\(45\)\s*(?:授权公告日|公告日)\s*([\d.]+)/);
-    const docAppDate = extractField(docContent, /\(22\)\s*申请日\s*([\d.]+)/);
-    const docAppNo = extractField(docContent, /\(21\)\s*申请号\s*([\d.]+)/);
-    const docInventor = extractField(docContent, /\(72\)\s*发明人?\s*(.*)/);
-    const docTitle = extractField(docContent, /(?:实用新型名称|发明名称|外观设计名称)\s*\n?\s*(.+)/);
-
-    html += `<div class="doc-viewer">`;
-    html += `<div class="doc-meta">
-      <div class="doc-meta-row"><div class="doc-meta-label">文献类型</div><div class="doc-meta-value">${docType || p.文献类型}</div></div>
-      <div class="doc-meta-row"><div class="doc-meta-label">授权公告号</div><div class="doc-meta-value">${docPubNo || p.公开号}</div></div>
-      <div class="doc-meta-row"><div class="doc-meta-label">授权公告日</div><div class="doc-meta-value">${docPubDate || p.公开日}</div></div>
-      <div class="doc-meta-row"><div class="doc-meta-label">申请号</div><div class="doc-meta-value">${docAppNo || appNo}</div></div>
-      <div class="doc-meta-row"><div class="doc-meta-label">申请日</div><div class="doc-meta-value">${docAppDate || p.申请日}</div></div>
-      <div class="doc-meta-row"><div class="doc-meta-label">发明人</div><div class="doc-meta-value">${docInventor || '-'}</div></div>
-      ${docTitle ? `<div class="doc-meta-row"><div class="doc-meta-label">发明名称</div><div class="doc-meta-value">${docTitle}</div></div>` : ''}
-    </div>`;
-    html += `<div class="doc-toolbar">
-      <button class="btn btn-outline btn-sm" onclick="copyDocContent()">📋 复制全文</button>
-      <button class="btn btn-outline btn-sm" onclick="downloadPatentPDF()">📄 下载PDF</button>
-      ${hasCert ? `<button class="btn btn-sm" style="background:var(--success);color:#fff;" onclick="downloadCertificate('${appNo}')">🏆 下载证书</button>` : ''}
-    </div>`;
-    
-    // Format document content with section highlighting
-    const formattedContent = docContent
-      .replace(/#   \((54|57|12)\)([^\n]*)/g, '<div class="doc-section-title">$2</div>')
-      .replace(/#   (技术领域|背景技术|发明内容|实用新型内容|具体实施方式|附图说明|摘要|权利要求书|说明书)/g, '<div class="doc-section-title">$1</div>')
-      .replace(/!\[[^\]]*\]\([^)]*\)/g, '[附图]')
-      .replace(/\[(\d{4})\]/g, '<span style="color:var(--primary);font-weight:500;">[$1]</span>');
-    
-    html += `<div class="doc-content">${formattedContent}</div>`;
-    html += `</div>`;
-  } else {
-    html += `<div class="doc-empty">
-      <div class="doc-empty-icon">📭</div>
-      <div style="font-size:16px;font-weight:500;margin-bottom:8px;">暂无该专利原文</div>
-      <div style="font-size:13px;">该专利（${p.文献类型}）的文本原文尚未上传</div>
-      <div style="font-size:12px;color:var(--gray-400);margin-top:4px;">申请号：${p.申请号}</div>`;
-    if (hasPDF) {
-      html += `<div style="margin-top:16px;padding:12px 16px;background:var(--primary-light);border:1px solid #c6dafc;border-radius:8px;text-align:left;">
-        <div style="font-size:13px;color:var(--primary);font-weight:500;">📂 有PDF原文可查看</div>
-        <button class="btn btn-sm" style="margin-top:8px;background:var(--primary);color:#fff;" onclick="downloadPatentPDF()">下载PDF</button>
-      </div>`;
-    }
-    if (hasCert) {
-      html += `<div style="margin-top:8px;padding:12px 16px;background:#e8f5e9;border:1px solid #a5d6a7;border-radius:8px;text-align:left;">
-        <div style="font-size:13px;color:var(--success);font-weight:500;">🏆 有专利证书可下载</div>
-        <button class="btn btn-sm" style="margin-top:8px;background:var(--success);color:#fff;" onclick="downloadCertificate('${appNo}')">下载证书</button>
-      </div>`;
-    }
-    if (relatedDocAppNo) {
-      const relPatent = related.find(r => r.申请号.replace(/^CN/, '') === relatedDocAppNo);
-      html += `<div style="margin-top:16px;padding:12px 16px;background:var(--primary-light);border:1px solid #c6dafc;border-radius:8px;text-align:left;">
-        <div style="font-size:13px;color:var(--primary);font-weight:500;">📎 同族专利有文档可查看</div>
-        <div style="font-size:12px;color:var(--gray-600);margin-top:6px;">该发明同名${relPatent ? relPatent.文献类型 : ''}版本（${relatedDocAppNo}）有原文</div>
-        <button class="btn btn-sm" style="margin-top:8px;background:var(--primary);color:#fff;" onclick="downloadPatentPDF()">下载PDF</button>
-      </div>`;
-    }
-    html += `</div>`;
   }
   html += `</div>`;
 
   document.getElementById('modalBody').innerHTML = html;
   document.getElementById('detailModal').classList.add('show');
-  
-  // If document is available, auto-switch to doc tab
-  if (hasDoc) {
-    setTimeout(() => {
-      const docTabEl = document.querySelectorAll('.detail-tab')[1];
-      if (docTabEl) switchDetailTab('doc', docTabEl);
-    }, 0);
-  }
 }
 
-function switchDetailTab(tab, el) {
-  document.querySelectorAll('.detail-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.detail-tab-content').forEach(c => c.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('detailTab-' + tab).classList.add('active');
-}
-
-function viewRelatedDoc(appNo) {
-  if (typeof PATENT_DOCS === 'undefined' || !PATENT_DOCS[appNo]) return;
-  // Enable the doc tab and switch to it
-  const docTab = document.querySelectorAll('.detail-tab')[1];
-  docTab.style.opacity = '1';
-  docTab.style.cursor = 'pointer';
-  docTab.onclick = function() { switchDetailTab('doc', this); };
-  docTab.innerHTML = '📄 专利原文';
-  // Update doc content with related document
-  const docContent = PATENT_DOCS[appNo];
-  const docTabContent = document.getElementById('detailTab-doc');
-  const extractField = (text, regex) => { const m = text.match(regex); return m ? m[1].trim() : '-'; };
-  const docType = extractField(docContent, /\(12\)\s*(发明专利|实用新型专利|外观设计专利|发明|实用新型|外观设计)/);
-  const docPubNo = extractField(docContent, /\(10\)\s*(?:授权公告号|公告号)\s*(CN\s*\S+)/);
-  const docPubDate = extractField(docContent, /\(45\)\s*(?:授权公告日|公告日)\s*([\d.]+)/);
-  const docAppDate = extractField(docContent, /\(22\)\s*申请日\s*([\d.]+)/);
-  const docInventor = extractField(docContent, /\(72\)\s*发明人?\s*(.*)/);
-  const docTitle = extractField(docContent, /(?:实用新型名称|发明名称|外观设计名称)\s*\n?\s*(.+)/);
-  
-  let html = `<div class="doc-viewer">`;
-  html += `<div style="margin-bottom:16px;padding:10px 14px;background:#fff3e0;border:1px solid #ffe0b2;border-radius:8px;font-size:12px;color:#e65100;">
-    ⚠️ 当前查看的是同族专利文档（申请号：${appNo}），与当前专利类型不同但发明名称相同
-  </div>`;
-  html += `<div class="doc-meta">
-    <div class="doc-meta-row"><div class="doc-meta-label">文献类型</div><div class="doc-meta-value">${docType}</div></div>
-    <div class="doc-meta-row"><div class="doc-meta-label">授权公告号</div><div class="doc-meta-value">${docPubNo}</div></div>
-    <div class="doc-meta-row"><div class="doc-meta-label">授权公告日</div><div class="doc-meta-value">${docPubDate}</div></div>
-    <div class="doc-meta-row"><div class="doc-meta-label">申请号</div><div class="doc-meta-value">${appNo}</div></div>
-    <div class="doc-meta-row"><div class="doc-meta-label">申请日</div><div class="doc-meta-value">${docAppDate}</div></div>
-    <div class="doc-meta-row"><div class="doc-meta-label">发明人</div><div class="doc-meta-value">${docInventor}</div></div>
-    ${docTitle ? `<div class="doc-meta-row"><div class="doc-meta-label">发明名称</div><div class="doc-meta-value">${docTitle}</div></div>` : ''}
-  </div>`;
-  html += `<div class="doc-toolbar">
-    <button class="btn btn-outline btn-sm" onclick="copyDocContent()">📋 复制全文</button>
-    <button class="btn btn-outline btn-sm" onclick="downloadPatentPDF()">📄 下载PDF</button>
-    ${(typeof PATENT_CERTIFICATES !== 'undefined' && PATENT_CERTIFICATES[appNo]) ? `<button class="btn btn-sm" style="background:var(--success);color:#fff;" onclick="downloadCertificate('${appNo}')">🏆 下载证书</button>` : ''}
-  </div>`;
-  const formattedContent = docContent
-    .replace(/#   \((54|57|12)\)([^\n]*)/g, '<div class="doc-section-title">$2</div>')
-    .replace(/#   (技术领域|背景技术|发明内容|实用新型内容|具体实施方式|附图说明|摘要|权利要求书|说明书)/g, '<div class="doc-section-title">$1</div>')
-    .replace(/!\[[^\]]*\]\([^)]*\)/g, '[附图]')
-    .replace(/\[(\d{4})\]/g, '<span style="color:var(--primary);font-weight:500;">[$1]</span>');
-  html += `<div class="doc-content">${formattedContent}</div>`;
-  html += `</div>`;
-  docTabContent.innerHTML = html;
-  switchDetailTab('doc', docTab);
-}
-
-function copyDocContent() {
-  const docEl = document.querySelector('.doc-content');
-  if (!docEl) return;
-  const text = docEl.innerText;
-  navigator.clipboard.writeText(text).then(() => {
-    const btn = event.target.closest('.btn');
-    const orig = btn.innerHTML;
-    btn.innerHTML = '✅ 已复制';
-    setTimeout(() => { btn.innerHTML = orig; }, 1500);
-  });
-}
-
-function exportDocText() {
-  const docEl = document.querySelector('.doc-content');
-  if (!docEl) return;
-  const title = document.getElementById('modalTitle').textContent;
-  const text = docEl.innerText;
-  const blob = new Blob([text], { type: 'text/plain;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = title + '_专利原文.txt';
-  a.click();
-  URL.revokeObjectURL(url);
+function extractAbstract(docText) {
+  if (!docText) return '';
+  const idx = docText.indexOf('(57)');
+  if (idx < 0) return '';
+  const rest = docText.substring(idx);
+  // Find end of abstract - next section marker (double newline + # or claims number)
+  let end = rest.search(/\n\n#\s+\(|\n\n\s*1\.\s/);
+  if (end < 0) end = rest.search(/\n\n!\[/);
+  if (end < 0) end = rest.length;
+  let abstract = rest.substring(0, end).trim();
+  // Remove (57) 摘要 prefix
+  abstract = abstract.replace(/^\(57\)\s*摘要\s*/, '').replace(/^\(57\)\s*/, '');
+  // Remove image references
+  abstract = abstract.replace(/!\[[^\]]*\]\([^)]*\)/g, '');
+  // Remove extra newlines and normalize whitespace
+  abstract = abstract.replace(/\n+/g, ' ').trim();
+  return abstract;
 }
 
 function downloadPatentPDF() {

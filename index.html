@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
 <title>优造专利库 - 专利管理与分析平台</title>
 <script>/**
  * Skipped minification because the original files appears to be already minified.
@@ -113,8 +113,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC'
 .dropdown-item.selected { color:var(--primary); font-weight:600; background:var(--primary-light); }
 
 @media (max-width:768px) {
-  .filter-bar { flex-direction:column; align-items:stretch; }
-  .dropdown, .search-input { width:100%; min-width:unset; }
+  .filter-bar { padding:12px; display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .filter-bar .search-input { grid-column:1/-1; width:100%; min-width:unset; }
+  .filter-bar > .btn { grid-column:1/-1; }
+  .dropdown { width:100%; min-width:unset; }
   .dropdown-menu { max-height:200px; }
 }
 .filter-tag { display:inline-flex; align-items:center; gap:4px; padding:6px 12px; background:var(--primary-light); color:var(--primary); border-radius:20px; font-size:12px; font-weight:500; }
@@ -237,12 +239,96 @@ tr.selected td { background:#d2e3fc; }
 
 /* Responsive */
 @media (max-width:768px) {
-  .stats-row { grid-template-columns:1fr 1fr; }
-  .charts-row, .charts-row-3 { grid-template-columns:1fr; }
-  .header { flex-direction:column; gap:12px; }
-  .detail-grid { grid-template-columns:1fr; }
+  /* Header */
+  .header { padding:12px 16px; flex-direction:column; gap:8px; }
+  .header-logo { width:36px; height:36px; font-size:18px; border-radius:8px; }
+  .header h1 { font-size:17px; }
+  .header-sub { font-size:11px; }
+  .header-stats { gap:12px; overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:4px; width:100%; }
+  .header-stat-num { font-size:18px; }
+  .header-stat-label { font-size:10px; }
+
+  /* Tabs */
+  .tabs { padding:0 8px; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .tab { padding:10px 14px; font-size:13px; white-space:nowrap; }
+
+  /* Main */
+  .main { padding:12px 12px; }
+
+  /* Dashboard stats */
+  .stats-row { grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+  .stat-card { padding:14px; }
+  .stat-value { font-size:24px; }
+  .stat-label { font-size:11px; }
+
+  /* Charts */
+  .charts-row, .charts-row-3 { grid-template-columns:1fr; gap:12px; margin-bottom:16px; }
+  .chart-card { padding:14px; }
+  .chart-title { font-size:14px; margin-bottom:12px; }
+
+  /* Filter bar */
+  .filter-bar { padding:12px; gap:8px; }
+  .dropdown, .search-input { width:100%; min-width:unset; }
+  .dropdown-menu { max-height:200px; }
+
+  /* Table */
+  .table-top { padding:12px; flex-direction:column; gap:8px; align-items:flex-start; }
+  .table-top h3 { font-size:14px; }
+  th { padding:8px 10px; font-size:11px; }
+  td { padding:8px 10px; font-size:12px; }
+
+  /* Pagination */
+  .pagination { padding:10px 12px; flex-direction:column; gap:8px; align-items:stretch; }
+  .page-info { text-align:center; font-size:12px; }
+  .page-btns { justify-content:center; flex-wrap:wrap; }
+  .page-btn { padding:5px 10px; font-size:12px; }
+
+  /* Detail Modal - full screen on mobile */
+  .modal-overlay.show { display:block; }
+  .modal { width:100%; max-width:100%; max-height:100vh; height:100vh; border-radius:0; }
+  .modal-header { padding:14px 16px; }
+  .modal-header h2 { font-size:16px; }
+  .modal-body { padding:0; }
+  .detail-grid { grid-template-columns:1fr; gap:12px; padding:16px; }
+  .detail-label { font-size:11px; }
+  .detail-value { font-size:13px; }
+  .detail-section { margin-top:16px; padding-top:14px; }
+  .detail-section h3 { font-size:14px; }
+
+  /* Doc viewer */
+  .doc-viewer { padding:16px; }
+  .doc-content { font-size:13px; line-height:1.7; }
+  .doc-toolbar { flex-wrap:wrap; }
+
+  /* Compare */
+  .compare-bar { padding:10px 12px; flex-direction:column; gap:8px; }
+  .compare-selected { flex-wrap:wrap; }
+  .compare-table th { padding:8px 10px; font-size:12px; }
+  .compare-table td { padding:8px 10px; font-size:12px; }
+
+  /* Infringement */
   .infringe-section { flex-direction:column; }
   .infringe-left { width:100%; }
+
+  /* Fee panel buttons */
+  #feePanel .btn-sm { padding:5px 10px; font-size:11px; }
+  #feePanel > div:first-child { flex-wrap:wrap; gap:8px; }
+  .fee-scroll-hint { display:block !important; }
+
+  /* Buttons - touch friendly */
+  .btn { padding:8px 16px; font-size:12px; min-height:38px; }
+  .btn-sm { padding:5px 12px; font-size:11px; min-height:34px; }
+}
+
+@media (max-width:480px) {
+  .stats-row { grid-template-columns:1fr 1fr; }
+  .header h1 { font-size:15px; }
+  .header-sub { font-size:10px; }
+  .header-stat-num { font-size:16px; }
+  .tab { padding:8px 10px; font-size:12px; }
+  .main { padding:8px; }
+  .stat-card { padding:12px; }
+  .stat-value { font-size:20px; }
 }
 
 /* Animations */
@@ -374,16 +460,16 @@ tr.selected td { background:#d2e3fc; }
 
   <!-- 年费缴纳清单面板 -->
   <div id="feePanel" style="display:none;margin-bottom:20px;background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;">
-    <div style="padding:16px 20px;background:linear-gradient(135deg,#fff8e1 0%,#fff3e0 100%);border-bottom:1px solid #ffe0b2;display:flex;justify-content:space-between;align-items:center;">
+    <div style="padding:14px 16px;background:linear-gradient(135deg,#fff8e1 0%,#fff3e0 100%);border-bottom:1px solid #ffe0b2;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
       <div style="display:flex;align-items:center;gap:10px;">
         <span style="font-size:20px;">💰</span>
         <div>
-          <div style="font-size:15px;font-weight:600;color:#e65100;" id="feePanelTitle">年费缴纳清单</div>
+          <div style="font-size:14px;font-weight:600;color:#e65100;" id="feePanelTitle">年费缴纳清单</div>
           <div style="font-size:12px;color:#bf360c;" id="feePanelSub"></div>
         </div>
       </div>
-      <div style="display:flex;gap:8px;">
-        <button class="btn btn-outline btn-sm" onclick="exportFeeList()" style="border-color:#e65100;color:#e65100;">📥 导出年费清单</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-outline btn-sm" onclick="exportFeeList()" style="border-color:#e65100;color:#e65100;">📥 导出清单</button>
         <button class="btn btn-sm" onclick="printFeeList()" style="background:#e65100;color:#fff;">🖨️ 打印</button>
       </div>
     </div>
@@ -398,8 +484,8 @@ tr.selected td { background:#d2e3fc; }
         <button class="btn btn-outline btn-sm" onclick="exportCSV()">📥 导出CSV</button>
       </div>
     </div>
-    <div style="overflow-x:auto;">
-      <table>
+    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
+      <table style="min-width:760px;">
         <thead>
           <tr>
             <th class="checkbox-cell"><input type="checkbox" id="selectAll" onchange="toggleSelectAll()" /></th>
@@ -466,7 +552,7 @@ tr.selected td { background:#d2e3fc; }
           <button class="btn btn-primary btn-sm" onclick="exportInfringeDocx()">📄 导出对比表(DOC)</button>
         </div>
       </div>
-      <div style="overflow-x:auto;margin-top:12px;">
+      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;margin-top:12px;">
         <table class="infringe-table" id="infringeTable">
           <thead>
             <tr>
@@ -1354,17 +1440,17 @@ function renderFeePanel() {
   const now = new Date();
   const currentYear = now.getFullYear();
   
-  let html = `<table style="width:100%;border-collapse:collapse;">
+  let html = `<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;"><table style="width:100%;border-collapse:collapse;min-width:800px;">
     <thead>
       <tr style="background:#fff8e1;">
-        <th style="padding:10px 14px;text-align:left;font-size:12px;color:#e65100;border-bottom:2px solid #ffe0b2;">序号</th>
-        <th style="padding:10px 14px;text-align:left;font-size:12px;color:#e65100;border-bottom:2px solid #ffe0b2;">申请号</th>
+        <th style="padding:10px 14px;text-align:left;font-size:12px;color:#e65100;border-bottom:2px solid #ffe0b2;white-space:nowrap;">序号</th>
+        <th style="padding:10px 14px;text-align:left;font-size:12px;color:#e65100;border-bottom:2px solid #ffe0b2;white-space:nowrap;">申请号</th>
         <th style="padding:10px 14px;text-align:left;font-size:12px;color:#e65100;border-bottom:2px solid #ffe0b2;">发明名称</th>
-        <th style="padding:10px 14px;text-align:left;font-size:12px;color:#e65100;border-bottom:2px solid #ffe0b2;">类型</th>
-        <th style="padding:10px 14px;text-align:left;font-size:12px;color:#e65100;border-bottom:2px solid #ffe0b2;">申请日</th>
-        <th style="padding:10px 14px;text-align:left;font-size:12px;color:#e65100;border-bottom:2px solid #ffe0b2;">专利年龄</th>
-        <th style="padding:10px 14px;text-align:left;font-size:12px;color:#e65100;border-bottom:2px solid #ffe0b2;">参考年费档</th>
-        <th style="padding:10px 14px;text-align:left;font-size:12px;color:#e65100;border-bottom:2px solid #ffe0b2;">缴费状态</th>
+        <th style="padding:10px 14px;text-align:left;font-size:12px;color:#e65100;border-bottom:2px solid #ffe0b2;white-space:nowrap;">类型</th>
+        <th style="padding:10px 14px;text-align:left;font-size:12px;color:#e65100;border-bottom:2px solid #ffe0b2;white-space:nowrap;">申请日</th>
+        <th style="padding:10px 14px;text-align:left;font-size:12px;color:#e65100;border-bottom:2px solid #ffe0b2;white-space:nowrap;">专利年龄</th>
+        <th style="padding:10px 14px;text-align:left;font-size:12px;color:#e65100;border-bottom:2px solid #ffe0b2;white-space:nowrap;">参考年费档</th>
+        <th style="padding:10px 14px;text-align:left;font-size:12px;color:#e65100;border-bottom:2px solid #ffe0b2;white-space:nowrap;">缴费状态</th>
       </tr>
     </thead><tbody>`;
   
@@ -1428,9 +1514,10 @@ function renderFeePanel() {
       <td style="padding:12px 14px;border-top:2px solid #ff9800;"></td>
     </tr>`;
   
-  html += '</tbody></table>';
-  html += `<div style="padding:12px 20px;background:#fff8e1;display:flex;justify-content:space-between;align-items:center;border-top:2px solid #ffe0b2;">
-    <div style="font-size:12px;color:#bf360c;">💡 参考年费档为明年应缴年费档（专利年龄+1）。实际费用以缴费当期为准。发明专利保护期20年，实用新型/外观设计10年。</div>
+  html += '</tbody></table></div>';
+  html += `<div style="padding:10px 16px;background:#fff8e1;display:flex;justify-content:space-between;align-items:center;border-top:2px solid #ffe0b2;flex-wrap:wrap;gap:8px;">
+    <div style="font-size:11px;color:#bf360c;">💡 参考年费档为明年应缴年费档（专利年龄+1）。实际费用以缴费当期为准。发明专利保护期20年，实用新型/外观设计10年。</div>
+    <div style="font-size:11px;color:#e65100;display:none;" class="fee-scroll-hint">👉 左右滑动查看完整表格</div>
   </div>`;
   
   panel.style.display = 'block';
@@ -1499,9 +1586,11 @@ function printFeeList() {
     <style>body{font-family:'Microsoft YaHei',sans-serif;padding:20px;} 
     h1{font-size:18px;text-align:center;margin-bottom:4px;}
     .sub{text-align:center;font-size:13px;color:#666;margin-bottom:16px;}
-    table{width:100%;border-collapse:collapse;}
+    table{width:100% !important;border-collapse:collapse;min-width:unset !important;}
     th,td{padding:8px 10px;border:1px solid #ddd;font-size:12px;text-align:left;}
     th{background:#f5f5f5;font-weight:600;}
+    div[style*="overflow-x"]{overflow:visible !important;}
+    .fee-scroll-hint{display:none !important;}
     .stamp{margin-top:30px;display:flex;justify-content:space-between;}
     .stamp div{font-size:13px;color:#333;}</style></head>
     <body><h1>宁波优造建筑科技有限公司</h1>
@@ -1576,7 +1665,7 @@ function renderCompare() {
     ['申请人', '申请人']
   ];
 
-  let html = '<div class="chart-card"><div class="chart-title">技术特征对比表</div><table class="compare-table"><thead><tr><th>对比项</th>';
+  let html = '<div class="chart-card"><div class="chart-title">技术特征对比表</div><div style="overflow-x:auto;-webkit-overflow-scrolling:touch;"><table class="compare-table" style="min-width:500px;"><thead><tr><th>对比项</th>';
   items.forEach(p => { html += `<th>${p.发明名称.length > 15 ? p.发明名称.substring(0,15)+'...' : p.发明名称}</th>`; });
   html += '</tr></thead><tbody>';
   fields.forEach(([label, key]) => {
@@ -1589,9 +1678,7 @@ function renderCompare() {
     });
     html += '</tr>';
   });
-  html += '</tbody></table></div>';
-
-  // Similarity analysis
+  html += '</tbody></table></div></div>';
   html += '<div class="chart-card" style="margin-top:20px;"><div class="chart-title">关联分析</div>';
   const nameGroups = {};
   items.forEach(p => {

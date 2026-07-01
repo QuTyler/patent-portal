@@ -1337,7 +1337,7 @@ function renderTable() {
 
   tbody.innerHTML = pageData.map(p => {
     const appNo = p.申请号.replace(/^CN/, '');
-    const hasDoc = (typeof PATENT_DOCS !== 'undefined' && PATENT_DOCS[appNo] && PATENT_DOCS[appNo].trim().length > 0);
+    const hasDoc = (typeof PATENT_PDFS !== 'undefined' && PATENT_PDFS[appNo]);
     const hasCert = (typeof PATENT_CERTIFICATES !== 'undefined' && PATENT_CERTIFICATES[appNo]);
     return `
     <tr class="${selectedIds.has(p.id) ? 'selected' : ''}" data-id="${p.id}">
